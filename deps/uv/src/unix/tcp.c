@@ -33,6 +33,7 @@ static int new_socket(uv_tcp_t* handle, int domain, unsigned long flags) {
   socklen_t slen;
   int sockfd;
   int err;
+  //printf("[WC][core.c] \033[32mnew socket...\033[0m\n");
 
   err = uv__socket(domain, SOCK_STREAM, 0);
   if (err < 0)
@@ -121,6 +122,8 @@ int uv_tcp_init_ex(uv_loop_t* loop, uv_tcp_t* tcp, unsigned int flags) {
 
   if (flags & ~0xFF)
     return UV_EINVAL;
+
+  //printf("[WC][tcp.c] \033[32muv_tcp_init_ex\033[0m\n");
 
   uv__stream_init(loop, (uv_stream_t*)tcp, UV_TCP);
 
@@ -269,7 +272,7 @@ int uv_tcp_open(uv_tcp_t* handle, uv_os_sock_t sock) {
 
   if (uv__fd_exists(handle->loop, sock))
     return UV_EEXIST;
-
+  //printf("[WC][unix/tcp.c] \033[32uv_tcp_open...\033[0m\n");
   err = uv__nonblock(sock, 1);
   if (err)
     return err;

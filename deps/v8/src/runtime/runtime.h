@@ -147,6 +147,11 @@ namespace internal {
   F(ForInEnumerate, 1, 1)              \
   F(ForInHasProperty, 2, 1)
 
+//[WC] added vvvvv
+#define FOR_EACH_INTRINSIC_INTERPRETER_AFL_BITMAP(F, I) \
+  F(InterpreterAFLBitmapBytecodeEntry, 3, 1)
+//[WC] added ^^^^^
+
 #ifdef V8_TRACE_IGNITION
 #define FOR_EACH_INTRINSIC_INTERPRETER_TRACE(F, I) \
   F(InterpreterTraceBytecodeEntry, 3, 1)           \
@@ -162,7 +167,9 @@ namespace internal {
 #define FOR_EACH_INTRINSIC_INTERPRETER_TRACE_FEEDBACK(F, I)
 #endif
 
+// [WC] added AFL line below
 #define FOR_EACH_INTRINSIC_INTERPRETER(F, I) \
+  FOR_EACH_INTRINSIC_INTERPRETER_AFL_BITMAP(F, I) \
   FOR_EACH_INTRINSIC_INTERPRETER_TRACE(F, I) \
   FOR_EACH_INTRINSIC_INTERPRETER_TRACE_FEEDBACK(F, I)
 

@@ -23,7 +23,7 @@
 
 #include <stddef.h> /* NULL */
 #include <stdio.h> /* printf */
-#include <stdlib.h>
+#include <stdlib.h> /*setenv, getenv */
 #include <string.h> /* strerror */
 #include <errno.h>
 #include <assert.h>
@@ -42,6 +42,8 @@
 #include <pwd.h>
 #include <sys/utsname.h>
 #include <sys/time.h>
+
+
 
 #ifdef __sun
 # include <sys/filio.h>
@@ -124,6 +126,10 @@ void uv_close(uv_handle_t* handle, uv_close_cb close_cb) {
     break;
 
   case UV_TCP:
+    //printf("[WC][core.c] uv_closing TCP");
+    unsetenv("RUN_AFL_TRACE");
+//    setenv("RUN_AFL_TRACE","0",1);
+    //printf("\n[WC][core.c] uv_closing TCP RUN_AFL_TRACE=%s\n", getenv("RUN_AFL_TRACE"));
     uv__tcp_close((uv_tcp_t*)handle);
     break;
 
@@ -188,8 +194,10 @@ int uv__socket_sockopt(uv_handle_t* handle, int optname, int* value) {
   if (handle == NULL || value == NULL)
     return UV_EINVAL;
 
-  if (handle->type == UV_TCP || handle->type == UV_NAMED_PIPE)
+  if (handle->type == UV_TCP || handle->type == UV_NAMED_PIPE) {
+    //printf("[WC][core.c] \033[32msocket_sockopt...\033[0m\n");
     fd = uv__stream_fd((uv_stream_t*) handle);
+  }
   else if (handle->type == UV_UDP)
     fd = ((uv_udp_t *) handle)->io_watcher.fd;
   else
@@ -268,6 +276,7 @@ static void uv__finish_close(uv_handle_t* handle) {
        * into the closing queue makes the event loop spin but that's
        * okay because we only need to deliver the pending events.
        */
+      //printf("[WC][core.c] received signal\n");
       sh = (uv_signal_t*) handle;
       if (sh->caught_signals > sh->dispatched_signals) {
         handle->flags ^= UV_HANDLE_CLOSED;
@@ -279,6 +288,7 @@ static void uv__finish_close(uv_handle_t* handle) {
     case UV_NAMED_PIPE:
     case UV_TCP:
     case UV_TTY:
+      //printf("[WC][core.c] close stream\n");
       uv__stream_destroy((uv_stream_t*)handle);
       break;
 
@@ -367,6 +377,14 @@ int uv_run(uv_loop_t* loop, uv_run_mode mode) {
     uv__update_time(loop);
 
   while (r != 0 && loop->stop_flag == 0) {
+    char *run_afl_trace = getenv("RUN_AFL_TRACE");
+
+//    if (run_afl_trace){
+//      printf("[WC][core.c] uv_run loop RUN_AFL_TRACE=%s\n", run_afl_trace);
+//    } else {
+//      printf("[WC][core.c] uv_run loop RUN_AFL_TRACE=%d\n", 0);
+//    }
+
     uv__update_time(loop);
     uv__run_timers(loop);
     ran_pending = uv__run_pending(loop);
@@ -476,7 +494,11 @@ FILE* uv__open_file(const char* path) {
 int uv__accept(int sockfd) {
   int peerfd;
   int err;
+  setenv("RUN_AFL_TRACE","1", 1);
 
+  //printf("[WC][core.c] \033[32m uv_accept RUN_AFL_TRACE=%s\033[0m\n", getenv("RUN_AFL_TRACE"));
+
+  //printf("[WC][core.c] \033[32m %d\033[0m\n", v8::run_afl_trace);
   (void) &err;
   assert(sockfd >= 0);
 
@@ -758,6 +780,7 @@ int uv_fileno(const uv_handle_t* handle, uv_os_fd_t* fd) {
   case UV_TCP:
   case UV_NAMED_PIPE:
   case UV_TTY:
+    //printf("[WC] uv_fileno\n");
     fd_out = uv__stream_fd((uv_stream_t*) handle);
     break;
 
@@ -999,7 +1022,7 @@ int uv__open_cloexec(const char* path, int flags) {
 #else  /* O_CLOEXEC */
   int err;
   int fd;
-
+  //printf("[WC][core.c] \033[32open_cloexec...\033[0m\n");
   fd = open(path, flags);
   if (fd == -1)
     return UV__ERR(errno);

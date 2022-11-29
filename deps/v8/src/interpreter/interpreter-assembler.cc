@@ -50,6 +50,10 @@ InterpreterAssembler::InterpreterAssembler(CodeAssemblerState* state,
 #ifdef V8_TRACE_IGNITION
   TraceBytecode(Runtime::kInterpreterTraceBytecodeEntry);
 #endif
+  //v8::startafl = 1;
+  // WC added
+  TraceBytecode(Runtime::kInterpreterAFLBitmapBytecodeEntry);
+
   RegisterCallGenerationCallbacks([this] { CallPrologue(); },
                                   [this] { CallEpilogue(); });
 
